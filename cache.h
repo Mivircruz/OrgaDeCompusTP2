@@ -38,14 +38,15 @@ void read_tocache(unsigned int blocknum, unsigned int way, unsigned int set);
 //If the byte is not on the cache, it brings that block from principal memory
 unsigned char read_byte(unsigned int address);
 
+
+//Writes the value given on cache memory on the set, the way and block given
+//If the block is not on the cache, it brings the block from principal memory
+//and writes it
+void write_tomem(unsigned int blocknum, unsigned int way, unsigned int set, unsigned char value);
+
 //Writes the value on principal memory on the address given 
 //and on cache memory
 //If the block is not on the cache, it only writes the value on principal memory
-void write_tomem(unsigned int blocknum, unsigned int way, unsigned int set);
-
-//Writes the value given on cache memory on the address mapped position
-//If the block is not on the cache, it brings the block from principal memory
-//and writes it
 void write_byte(unsigned int address, unsigned char value);
 
 //Returns miss rate
