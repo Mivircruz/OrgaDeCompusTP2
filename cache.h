@@ -15,7 +15,7 @@ typedef struct cache cache_t;
  * *****************************************************************/
 
 //Initializes:
-//Principal memory to 0
+//Main memory to 0
 //Cache lines as invalid
 //Miss rate to 0
 void init(void);
@@ -35,18 +35,15 @@ void read_tocache(unsigned int blocknum, unsigned int way, unsigned int set);
 
 //Seeks the byte's value according to address's position on the cache memory
 //and returns it
-//If the byte is not on the cache, it brings that block from principal memory
+//If the byte is not on the cache, it brings that block from main memory
 unsigned char read_byte(unsigned int address);
 
-
-//Writes the value given on cache memory on the set, the way and block given
-//If the block is not on the cache, it brings the block from principal memory
-//and writes it
+//Updates the blocknum of main memory and writes the value on the way 'way' and the set 'set'
 void write_tomem(unsigned int blocknum, unsigned int way, unsigned int set, unsigned char value);
 
-//Writes the value on principal memory on the address given 
+//Writes the value on main memory on the address given 
 //and on cache memory
-//If the block is not on the cache, it only writes the value on principal memory
+//If the block is not on the cache, it only writes the value on main memory
 void write_byte(unsigned int address, unsigned char value);
 
 //Returns miss rate
