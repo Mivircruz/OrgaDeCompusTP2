@@ -1,5 +1,6 @@
 #include "cache.h"
 #include <stdio.h>
+#include <math.h>
 
 #define MEMORY_SIZE 64 * 1024   //64KB
 #define CACHE_SIZE 16 * 1024    //16KB
@@ -8,6 +9,9 @@
 #define CACHE_METADATA 3
 #define CACHE_SET CACHE_SIZE / (BLOCK_SIZE * CACHE_WAYS)
 
+#define SIZE_SET_BITS 5
+#define SIZE_OFFSET_BITS 6
+#define SIZE_TAG_BITS 5
 /* ******************************************************************
  *             STRUCT CACHE ADT DEFINITION
  * *****************************************************************/
@@ -55,7 +59,9 @@ void read_tocache(unsigned int blocknum, unsigned int way, unsigned int set)
 //Returns the content of the cache set to which the address maps
 unsigned int find_set(unsigned int address)
 {
-
+    unsigned int mask = pow(2,SIZE_SET_BITS) - 1;                         //load ones in five bits less significatives
+    unsigned int adress_desplazed = address >> SIZE_SET_BITS;   //right shift
+    return (adress_desplazed & mask);               //return only five bits less significatives
 }
 
 //Writes the value on main memory on the address given 
