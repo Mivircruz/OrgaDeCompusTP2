@@ -50,6 +50,6 @@ void write_byte(unsigned int address, unsigned char value);
 float get_miss_rate(void);
 
 //Releases ADT cache
-void release(void):
+void release(void);
 
 #endif
