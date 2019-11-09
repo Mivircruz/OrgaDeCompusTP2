@@ -1,21 +1,28 @@
 #include "cache.h"
 #include <stdio.h>
 
+#define MEMORY_SIZE 64 * 1024   //64KB
+#define CACHE_SIZE 16 * 1024    //16KB
+#define BLOCK_SIZE 64           //64B
+#define CACHE_WAYS 8
+#define CACHE_METADATA 3
+#define CACHE_SET CACHE_SIZE / (BLOCK_SIZE * CACHE_WAYS)
+
 /* ******************************************************************
  *             STRUCT CACHE ADT DEFINITION
  * *****************************************************************/
 
+//Main memory
+//Size: 64KB
+//Block Size: 16B
+unsigned char MAIN_MEMORY[MEMORY_SIZE / BLOCK_SIZE][BLOCK_SIZE];
+
 struct cache
 {
-    //Main memory
-    //Size: 64KB
-    //Block Size: 16B
-    unsigned char main_memory[MEMORY_SIZE / BLOCK_SIZE][BLOCK_SIZE];
-
     //Cache memory - 8-WSA
     //Size: 16KB
-    //Block Size: 16B
-    unsigned char cache_memory[CACHE_SIZE / (BLOCK_SIZE * CACHE_WAYS)][BLOCK_SIZE * CACHE_WAYS];
+    //Block Size: 64B
+    unsigned char cache_memory[CACHE_WAYS][CACHE_SET][BLOCK_SIZE];
 
     //Metadata
     //First byte: Valid
