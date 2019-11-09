@@ -23,7 +23,7 @@ void init(void);
 //Returns the byte's offset of the memory block to which the address maps
 unsigned int get_offset (unsigned int address);
 
-//Returns the content of the cache set to which the address maps
+//Returns the number of the cache set to which the address maps
 unsigned int find_set(unsigned int address);
 
 //Returns the way containing the oldest block inside the set 'setnum'
