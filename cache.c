@@ -33,9 +33,35 @@ struct cache
     //Miss rate
     size_t MR;
 
-};
+} CACHE;
 
 
 /* ******************************************************************
  *             CACHE FUNCTIONS
  * *****************************************************************/
+
+
+//Reads the block 'blocknum' from memory and 
+//stores it on the specified way and set on cache memory
+void read_tocache(unsigned int blocknum, unsigned int way, unsigned int set)
+{
+    for(int offset = 0; offset < BLOCK_SIZE; offset++)
+    {
+        CACHE.cache_memory[way][set][offset] = MAIN_MEMORY[blocknum][offset];
+    }
+}
+
+
+//Returns the content of the cache set to which the address maps
+unsigned int find_set(unsigned int address)
+{
+
+}
+
+//Writes the value on main memory on the address given 
+//and on cache memory
+//If the block is not on the cache, it only writes the value on main memory
+void write_byte(unsigned int address, unsigned char value)
+{
+
+}
