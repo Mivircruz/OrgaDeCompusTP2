@@ -19,6 +19,8 @@
 #define MASK_TAG 0x0000FF0000000000
 #define MASK_VALID 0xFF00000000000000
 #define MASK_OFFSET 0x003F
+#define MASK_COUNTER 0xFF000000
+#define MASK_DIRTY 0x0000FF00
 
 /* ******************************************************************
  *             STRUCT CACHE ADT DEFINITION
@@ -51,7 +53,7 @@ struct cache
 cache_t CACHE; 
 
 
-/* ******************************************************************
+/* *****************************************************************
  *                    AUXILIAR FUNCTIONS
  * *****************************************************************/
 
@@ -59,14 +61,14 @@ unsigned int binary(unsigned int num) {
     unsigned int binary[64];
     unsigned int mask = BINARY_MASK;
 
-    while(mask > 0) {
-   if((num & mask) == 0 )
-        strncat(binary, "0", 1);
-   else
-        strncat(binary, "1", 1);
-    mask = mask >> 1 ;  // Right Shift
-   }
-   return binary;
+    while (mask > 0) {
+        if((num & mask) == 0 )
+            strncat(binary, "0", 1);
+        else
+            strncat(binary, "1", 1);
+        mask = mask >> 1 ;  // Right Shift
+    }
+    return binary;
 }
 
 /* ******************************************************************
@@ -80,8 +82,8 @@ unsigned int binary(unsigned int num) {
 void init(void){
     memset(MAIN_MEMORY, 0, sizeof(MAIN_MEMORY)); //Main memory initialized to 0
     memset(CACHE.cache_metadata, 0, sizeof(CACHE.cache_metadata)); //Dirty, Tag and counter initialized to 0
-    for(size_t i = 0; i < CACHE_SIZE / (BLOCK_SIZE * CACHE_WAYS); i++) {
-        for(size_t j = 0; j < CACHE_METADATA * CACHE_WAYS; j += CACHE_METADATA)
+    for (size_t i = 0; i < CACHE_SIZE / (BLOCK_SIZE * CACHE_WAYS); i++) {
+        for (size_t j = 0; j < CACHE_METADATA * CACHE_WAYS; j += CACHE_METADATA)
             CACHE.cache_metadata[i][j] = 1; //Valid initialized to 1
     }
 }
@@ -96,7 +98,7 @@ unsigned int get_offset (unsigned int address){
 //stores it on the specified way and set on cache memory
 void read_tocache(unsigned int blocknum, unsigned int way, unsigned int set)
 {
-    for(int offset = 0; offset < BLOCK_SIZE; offset++)
+    for (int offset = 0; offset < BLOCK_SIZE; offset++)
     {
         CACHE.cache_memory[way][set][offset] = MAIN_MEMORY[blocknum][offset];
     }
@@ -138,14 +140,21 @@ void write_in_cache(unsigned int address, unsigned char value)
     unsigned int set = find_set(address);
     unsigned int offset = get_offset(address);
     unsigned int tag = get_tag(address);
+    int64_t metadata;
+    unsigned int tag_in_cache;
 
     // TODO - ver validez
-    for(int way = 0; way < CACHE_WAYS; way++)
+    for (int way = 0; way < CACHE_WAYS; way++)
     {
-        int64_t metadata = CACHE.cache_metadata[way][set];
-        unsigned int tag_in_cache = (metadata & MASK_TAG) >> 32; // the four bytes less significatives are droped.
+        metadata = CACHE.cache_metadata[way][set];
+        tag_in_cache = (metadata & MASK_TAG) >> 32; // the four bytes less significatives are droped.
         if (tag_in_cache == tag) // the address match with the adress in cache metadata. The address i
         {
+            if (metadata & MASK_DIRTY) // checks if we need to write that block in memory (write back politics)
+            {
+                write_tomem(CACHE.cache_memory[way][set][offset], address / BLOCK_SIZE, address % BLOCK_SIZE);
+            }
+
             CACHE.cache_memory[way][set][offset] = value;
             CACHE.cache_metadata[way][set] = CACHE.cache_metadata[way][set] & MASK_VALID; // set byte valid with all ones
             return;
@@ -154,12 +163,37 @@ void write_in_cache(unsigned int address, unsigned char value)
     }
 }
 
+//Updates the blocknum in the 'set' and the in the 'offset' of main memory
+void write_tomem(unsigned int blocknum, unsigned int set, unsigned int offset)
+{
+    MAIN_MEMORY[set][offset] = blocknum;
+}
+
 //Returns the tag of the memory block to which the address maps
 unsigned int get_tag(unsigned int address)
 {
     unsigned int mask = pow(2,SIZE_TAG_BITS) - 1;  
     unsigned int tag = (address >> (SIZE_SET_BITS + SIZE_OFFSET_BITS)) & mask;
     return tag;
+}
+
+//Returns the way containing the oldest block inside the set 'setnum'
+unsigned int select_oldest(unsigned int setnum)
+{
+    unsigned int oldest_block = 0;
+
+    for (int way = 0; way < CACHE_WAYS; way++)
+    {
+        int64_t metadata = CACHE.cache_metadata[way][setnum]; //we check de metadata of a specific block 
+        unsigned int counter_metadata = (metadata & MASK_COUNTER) >> 24; //only the most significant byte is necessary
+        if (counter_metadata > oldest_block) 
+        {
+            oldest_block = counter_metadata;
+        }
+
+    }
+
+    return oldest_block;    
 }
 
 //Returns miss rate
