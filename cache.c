@@ -153,10 +153,11 @@ void write_in_cache(unsigned int address, unsigned char value)
             if (metadata & MASK_DIRTY) // checks if we need to write that block in memory (write back politics)
             {
                 write_tomem(CACHE.cache_memory[way][set][offset], address / BLOCK_SIZE, address % BLOCK_SIZE);
+                CACHE.cache_metadata[way][set] &= ~MASK_DIRTY; // we set the dirty byte in 0
             }
 
             CACHE.cache_memory[way][set][offset] = value;
-            CACHE.cache_metadata[way][set] = CACHE.cache_metadata[way][set] & MASK_VALID; // set byte valid with all ones
+            CACHE.cache_metadata[way][set] |= MASK_VALID; // set byte valid with all ones
             return;
         }
 
