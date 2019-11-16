@@ -1,5 +1,6 @@
 #include "cache.h"
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 #include <stdint.h>
 
@@ -13,8 +14,6 @@
 #define SIZE_SET_BITS 5
 #define SIZE_OFFSET_BITS 6
 #define SIZE_TAG_BITS 5
-
-#define BINARY_MASK 32768 //mask = [1000 0000 0000 0000]
 
 #define MASK_TAG 0x0000FF0000000000
 #define MASK_VALID 0xFF00000000000000
@@ -31,8 +30,7 @@
 //Block Size: 16B
 unsigned char MAIN_MEMORY[MEMORY_SIZE / BLOCK_SIZE][BLOCK_SIZE];
 
-struct cache
-{
+struct cache {
     //Cache memory - 8-WSA
     //Size: 16KB
     //Block Size: 64B
@@ -48,7 +46,7 @@ struct cache
     //Miss rate
     float MR;
 
-} cache_t;
+}cache;
 
 cache_t CACHE; 
 
@@ -57,18 +55,12 @@ cache_t CACHE;
  *                    AUXILIAR FUNCTIONS
  * *****************************************************************/
 
-unsigned int binary(unsigned int num) {
-    unsigned int binary[64];
-    unsigned int mask = BINARY_MASK;
-
-    while (mask > 0) {
-        if((num & mask) == 0 )
-            strncat(binary, "0", 1);
-        else
-            strncat(binary, "1", 1);
-        mask = mask >> 1 ;  // Right Shift
-    }
-    return binary;
+// Write in main memory the value in the address
+void write_in_main_memory(unsigned int address, unsigned char value)
+{
+    unsigned int set = address / BLOCK_SIZE;
+    unsigned int offset = address % BLOCK_SIZE;
+    MAIN_MEMORY[set][offset] = value;
 }
 
 /* ******************************************************************
@@ -88,22 +80,13 @@ void init(void){
     }
 }
 
+
 //Returns the byte's offset of the memory block to which the address maps
 unsigned int get_offset (unsigned int address){
-    unsigned int binary = binary(address);
-    return binary & MASK_OFFSET;
+    unsigned int mask = pow(2,SIZE_OFFSET_BITS) - 1;  //loads 1 in 6 bits less significatives
+    unsigned int offset = address & mask;
+    return offset;
 }
-
-//Reads the block 'blocknum' from memory and 
-//stores it on the specified way and set on cache memory
-void read_tocache(unsigned int blocknum, unsigned int way, unsigned int set)
-{
-    for (int offset = 0; offset < BLOCK_SIZE; offset++)
-    {
-        CACHE.cache_memory[way][set][offset] = MAIN_MEMORY[blocknum][offset];
-    }
-}
-
 
 //Returns the number of the cache set to which the address maps
 unsigned int find_set(unsigned int address)
@@ -113,24 +96,12 @@ unsigned int find_set(unsigned int address)
     return (adress_desplazed & mask);                           //return only five bits less significatives
 }
 
-//Writes the value on main memory on the address given 
-//and on cache memory
-//If the block is not on the cache, it only writes the value on main memory
-void write_byte(unsigned int address, unsigned char value)
+//Returns the tag of the memory block to which the address maps
+unsigned int get_tag(unsigned int address)
 {
-    //writing in main memory.
-    write_in_main_memory(address, value);
-
-    //writin in cache memory.
-    write_in_cache(address, value);
-}
-
-// Write in main memory the value in the address
-void write_in_main_memory(unsigned int address, unsigned char value)
-{
-    unsigned int set = address / BLOCK_SIZE;
-    unsigned int offset = address % BLOCK_SIZE;
-    MAIN_MEMORY[set][offset] = value;
+    unsigned int mask = pow(2,SIZE_TAG_BITS) - 1;  
+    unsigned int tag = (address >> (SIZE_SET_BITS + SIZE_OFFSET_BITS)) & mask;
+    return tag;
 }
 
 // Write in cache the value only if the adress is found in some block of cache.
@@ -164,18 +135,33 @@ void write_in_cache(unsigned int address, unsigned char value)
     }
 }
 
+
+//Reads the block 'blocknum' from memory and 
+//stores it on the specified way and set on cache memory
+void read_tocache(unsigned int blocknum, unsigned int way, unsigned int set)
+{
+    for (int offset = 0; offset < BLOCK_SIZE; offset++)
+    {
+        CACHE.cache_memory[way][set][offset] = MAIN_MEMORY[blocknum][offset];
+    }
+}
+
+//Writes the value on main memory on the address given 
+//and on cache memory
+//If the block is not on the cache, it only writes the value on main memory
+void write_byte(unsigned int address, unsigned char value)
+{
+    //writing in main memory.
+    write_in_main_memory(address, value);
+
+    //writin in cache memory.
+    write_in_cache(address, value);
+}
+
 //Updates the blocknum in the 'set' and the in the 'offset' of main memory
 void write_tomem(unsigned int blocknum, unsigned int set, unsigned int offset)
 {
     MAIN_MEMORY[set][offset] = blocknum;
-}
-
-//Returns the tag of the memory block to which the address maps
-unsigned int get_tag(unsigned int address)
-{
-    unsigned int mask = pow(2,SIZE_TAG_BITS) - 1;  
-    unsigned int tag = (address >> (SIZE_SET_BITS + SIZE_OFFSET_BITS)) & mask;
-    return tag;
 }
 
 //Returns the way containing the oldest block inside the set 'setnum'
