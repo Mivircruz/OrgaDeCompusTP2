@@ -10,12 +10,12 @@ EXECUTABLE = tp2
 build: $(CFILES)
 		$(CC) $(CFLAGS) -o $(EXECUTABLE) $(CFILES)
 
-run_pruebas_todas: build
-		./$(EXECUTABLE) prueba1.mem prueba2.mem prueba3.mem prueba3b.mem prueba4.mem prueba5.mem 
+run: build
+		./$(EXECUTABLE) 
 
-run_prueba1: build
-		./$(EXECUTABLE) prueba1.mem 
-
+gdb: build
+	gdb ./$(EXECUTABLE)
+	
 zip: build
 	zip $(EXECUTABLE).zip $(CFILES) $(HFILES)
 

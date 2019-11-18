@@ -12,6 +12,6 @@
 //Executes the command given
 //If everything's fine, returns OK
 //Otherwise, returns ERROR
-status_t execute_command(char* args[]);
+status_t execute_command(char* line);
 
 #endif

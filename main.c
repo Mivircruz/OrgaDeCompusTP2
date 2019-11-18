@@ -5,18 +5,16 @@
 #include "errors.h"
 
 int main(int argc, char* argv[]) {
-    printf("MAIN\n");
-	char* linea = NULL;
-	size_t capacidad = 0;
+	char* line = NULL;
+	size_t capacity = 0;
     status_t st;
 
-	while(getline(&linea, &capacidad, stdin) != -1){
-        printf("ENTRO\n");
-        if((st = execute_command(argv)) != OK) {
+	while(getline(&line, &capacity, stdin) != -1){
+        if((st = execute_command(line)) != OK) {
             show_error(st);
             break;
         }
 	}
-	free(linea);
+	free(line);
     return st;
 }
