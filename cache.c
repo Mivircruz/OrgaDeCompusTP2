@@ -123,7 +123,7 @@ void write_in_cache(unsigned int address, unsigned char value)
         {
             if (metadata & MASK_DIRTY) // checks if we need to write that block in memory (write back politics)
             {
-                write_tomem(CACHE.cache_memory[way][set][offset], address / BLOCK_SIZE, address % BLOCK_SIZE);
+                write_tomem(CACHE.cache_memory[way][set][offset], address / BLOCK_SIZE, address % BLOCK_SIZE, value);
                 CACHE.cache_metadata[way][set] &= ~MASK_DIRTY; // we set the dirty byte in 0
             }
 
@@ -159,7 +159,7 @@ void write_byte(unsigned int address, unsigned char value)
 }
 
 //Updates the blocknum in the 'set' and the in the 'offset' of main memory
-void write_tomem(unsigned int blocknum, unsigned int set, unsigned int offset)
+void write_tomem(unsigned int blocknum, unsigned int set, unsigned int offset, unsigned char value)
 {
     MAIN_MEMORY[set][offset] = blocknum;
 }
