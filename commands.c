@@ -23,29 +23,32 @@ char* get_command(char* line){
     return result;
 }
 
-
+char* get_arguments(char* line) {
+    return strchr(line, ARGS_SEP);
+}
 /* ******************************************************************
  *                      COMMAND FUNCTIONS
  * *****************************************************************/
 
 status_t execute_command(char* line) {
-    char* argument = get_command(line);
+    char* command = get_command(line);
+    char* arguments;
 
-    if(!strcmp(argument, FLUSH_CMD)) {
-        //init();
-        free(argument);
+    if(!strcmp(command, FLUSH_CMD)) {
+        init();
+        free(command);
         return OK;
-    } else if (!strcmp(argument, READ_CMD)) {
-        //read_byte(args[2]);
-        free(argument);
+    } else if (!strcmp(command, READ_CMD)) {
+        //read_byte();
+        free(command);
         return OK;
-    } else if (!strcmp(argument, WRITE_CMD)) {
+    } else if (!strcmp(command, WRITE_CMD)) {
         //write_byte(args[2], args[3]);
-        free(argument);
+        free(command);
         return OK;
-    } else if (!strcmp(argument, MISS_RATE_CMD)) {
-        //get_miss_rate();
-        free(argument);
+    } else if (!strcmp(command, MISS_RATE_CMD)) {
+        get_miss_rate();
+        free(command);
         return OK;
     }
     free(argument);
