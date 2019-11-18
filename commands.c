@@ -12,10 +12,10 @@
 char* get_command(char* line){
     size_t counter;
 
-    for(counter = 0; line[counter] != '\0' && line[counter] != ' '; counter++);
+    for(counter = 0; line[counter] != '\n' && line[counter] != ' '; counter++);
     char* result = malloc(sizeof(char) * (counter + 1));
 
-    for(counter = 0; line[counter] != '\0' && line[counter] != ' '; counter++); {
+    for(counter = 0; line[counter] != '\n' && line[counter] != ' '; counter++) {
         result[counter] = line[counter];
     }
     result[counter] = '\0';
