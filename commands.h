@@ -8,6 +8,7 @@
 #define WRITE_CMD "W"
 #define WRITE_SEP ','
 #define MISS_RATE_CMD "MR"
+#define ARGS_SEP ' '
 
 //Executes the command given
 //If everything's fine, returns OK
