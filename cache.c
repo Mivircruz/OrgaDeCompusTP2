@@ -44,8 +44,8 @@ struct cache {
     uint16_t cache_metadata[CACHE_SIZE / (BLOCK_SIZE * CACHE_WAYS)][CACHE_WAYS];
 
     //Miss rate
-    unsigned int access;
-    unsigned int misses;
+    float access;
+    float misses;
     
 
 }cache;
@@ -158,6 +158,9 @@ void write_in_cache(unsigned int address, unsigned char value)
         tag_in_cache = (metadata & MASK_TAG) >> 9; //the 9 bits less significatives are droped (counter ones).
         if (tag_in_cache == tag) // the address match with the adress in cache metadata. The address i
         {
+            if(!(metadata & MASK_VALID)) {
+                continue;
+            }
             if (metadata & MASK_DIRTY) // checks if we need to write that block in memory (write back politics)
             {
                 write_tomem(CACHE.cache_memory[way][set][offset], address / BLOCK_SIZE, address % BLOCK_SIZE, value);
@@ -174,7 +177,7 @@ void write_in_cache(unsigned int address, unsigned char value)
     //Seeks for an empty block
     for (int way = 0; way < CACHE_WAYS; way++) {
          metadata = CACHE.cache_metadata[way][set];
-        if (metadata & MASK_VALID) {
+        if (!(metadata & MASK_VALID)) {
             _write_in_cache(way, set, offset, value);
             return;
         }
@@ -238,6 +241,7 @@ unsigned char read_byte(unsigned int address)
 void write_byte(unsigned int address, unsigned char value)
 {
     CACHE.access++;
+
     //writing in main memory.
     write_in_main_memory(address, value);
 
