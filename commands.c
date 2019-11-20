@@ -67,12 +67,12 @@ status_t execute_command(char* line) {
         return OK;
     } else if (!strcmp(command, READ_CMD)) {
         arg1 = strtol(get_arguments(line), &aux, 10);  //to convert string to int
-        //read_byte(arg1);
+        read_byte(arg1);
         free(command);
         return OK;
     } else if (!strcmp(command, WRITE_CMD)) {
         separate_arguments(line, &arg1, &arg2);
-        //write_byte(arg1, arg2);
+        write_byte(arg1, arg2);
         free(command);
         return OK;
     } else if (!strcmp(command, MISS_RATE_CMD)) {

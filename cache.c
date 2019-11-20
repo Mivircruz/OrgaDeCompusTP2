@@ -74,10 +74,6 @@ void write_in_main_memory(unsigned int address, unsigned char value)
 void init(void){
     memset(MAIN_MEMORY, 0, sizeof(MAIN_MEMORY)); //Main memory initialized to 0
     memset(CACHE.cache_metadata, 0, sizeof(CACHE.cache_metadata)); //Dirty, Tag and counter initialized to 0
-    for (size_t i = 0; i < CACHE_SIZE / (BLOCK_SIZE * CACHE_WAYS); i++) {
-        for (size_t j = 0; j < CACHE_METADATA * CACHE_WAYS; j += CACHE_METADATA)
-            CACHE.cache_metadata[i][j] = 1; //Valid initialized to 1
-    }
 }
 
 
@@ -104,7 +100,7 @@ unsigned int get_tag(unsigned int address)
     return tag;
 }
 
-// Write in cache the value only if the adress is found in some block of cache.
+// Write in cache the value only if the address is found in some block of cache.
 void write_in_cache(unsigned int address, unsigned char value)
 {
     // values are from the adress 
@@ -144,6 +140,40 @@ void read_tocache(unsigned int blocknum, unsigned int way, unsigned int set)
     {
         CACHE.cache_memory[way][set][offset] = MAIN_MEMORY[blocknum][offset];
     }
+    
+    CACHE.cache_metadata[way][set] |= MASK_VALID; //if its load the block in cache, its need to refresh metadata
+}
+
+unsigned char read_byte(unsigned int address)
+{
+    unsigned int set = find_set(address);
+    unsigned int offset = get_offset(address);
+    unsigned int tag = get_tag(address);
+    unsigned char read_value = CACHE.cache_memory[tag][set][offset];
+
+    int64_t metadata;
+    unsigned int tag_in_cache;
+
+    for (int way = 0; way < CACHE_WAYS; way++)
+    {
+        metadata = CACHE.cache_metadata[way][set];
+        tag_in_cache = (metadata & MASK_TAG) >> 32; // the four bytes less significatives are droped.
+        
+        if (tag_in_cache == tag) // the address match with the adress in cache metadata. The address i
+        {
+            if (metadata & MASK_VALID) // if we don't have the data in cache, we bring it from main memory
+            {
+                read_tocache(address/BLOCK_SIZE, way, set);
+            }
+
+            read_value = CACHE.cache_memory[way][set][offset];
+            
+            fprintf (stdout, "READ VALUE: %u\n", read_value);
+
+            return read_value;
+        }
+    }
+    return read_value;
 }
 
 //Writes the value on main memory on the address given 
