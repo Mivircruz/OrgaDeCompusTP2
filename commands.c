@@ -43,13 +43,13 @@ void separate_arguments(char* line, unsigned int* arg1, unsigned int* arg2) {
 
     for(counter = 0; arguments[counter] != WRITE_SEP; counter++) {
         arg_string[counter] = arguments[counter];
-    }
+    }   
     arg_string[counter] = '\0';
     *arg1 = strtol(arg_string, &aux, 10);
     free(arg_string);
 
     arg_string = strchr(arguments, WRITE_SEP);
-    *arg2 = strtol(arg_string, &aux, 10);
+    *arg2 = strtol(arg_string + 1, &aux, 10); // el mas uno es para saltearse la coma
 }
 /* ******************************************************************
  *                      COMMAND FUNCTIONS

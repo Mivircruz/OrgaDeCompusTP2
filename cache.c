@@ -63,6 +63,18 @@ void write_in_main_memory(unsigned int address, unsigned char value)
     MAIN_MEMORY[set][offset] = value;
 }
 
+void print_line_cache(unsigned int way, unsigned int set){
+    printf("La linea en cache se encuentra en way %u, set %u \n", way, set);
+
+    for (int i = 0; i < 16; i++)
+    {
+        if (i % 4 == 0 && i != 0) printf(" : ");
+        printf("%02X "   , CACHE.cache_memory[way][set][i]);
+    }
+    printf("\n");
+}
+
+
 /* ******************************************************************
  *                      CACHE FUNCTIONS
  * *****************************************************************/
@@ -115,7 +127,7 @@ void write_in_cache(unsigned int address, unsigned char value)
     {
         metadata = CACHE.cache_metadata[way][set];
         tag_in_cache = (metadata & MASK_TAG) >> 32; // the four bytes less significatives are droped.
-        if (tag_in_cache == tag) // the address match with the adress in cache metadata. The address i
+        if (tag_in_cache == tag ) // the address match with the adress in cache metadata. The address i
         {
             if (metadata & MASK_DIRTY) // checks if we need to write that block in memory (write back politics)
             {
@@ -125,6 +137,7 @@ void write_in_cache(unsigned int address, unsigned char value)
 
             CACHE.cache_memory[way][set][offset] = value;
             CACHE.cache_metadata[way][set] |= MASK_VALID; // set byte valid with all ones
+            print_line_cache(way, set);
             return;
         }
 
