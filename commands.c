@@ -67,7 +67,7 @@ status_t execute_command(char* line) {
         return OK;
     } else if (!strcmp(command, READ_CMD)) {
         arg1 = strtol(get_arguments(line), &aux, 10);  //to convert string to int
-        read_byte(arg1);
+        printf("Read value: %u\n", read_byte(arg1));
         free(command);
         return OK;
     } else if (!strcmp(command, WRITE_CMD)) {

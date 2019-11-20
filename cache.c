@@ -226,8 +226,6 @@ unsigned char read_byte(unsigned int address)
             }
 
             read_value = CACHE.cache_memory[way][set][offset];
-            
-            fprintf (stdout, "READ VALUE: %u\n", read_value);
 
             return read_value;
         }
