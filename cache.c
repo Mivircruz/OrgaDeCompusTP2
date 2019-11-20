@@ -44,7 +44,9 @@ struct cache {
     uint16_t cache_metadata[CACHE_SIZE / (BLOCK_SIZE * CACHE_WAYS)][CACHE_WAYS];
 
     //Miss rate
-    float MR;
+    unsigned int access;
+    unsigned int misses;
+    
 
 }cache;
 
@@ -167,7 +169,7 @@ void write_in_cache(unsigned int address, unsigned char value)
 
     }
     //If the block is not on the cache, is a miss
-    CACHE.MR++;
+    CACHE.misses++;
 
     //Seeks for an empty block
     for (int way = 0; way < CACHE_WAYS; way++) {
@@ -205,6 +207,8 @@ unsigned char read_byte(unsigned int address)
     uint16_t metadata;
     unsigned int tag_in_cache;
 
+    CACHE.access++;
+
     for (int way = 0; way < CACHE_WAYS; way++)
     {
         metadata = CACHE.cache_metadata[way][set];
@@ -215,7 +219,7 @@ unsigned char read_byte(unsigned int address)
             if (metadata & MASK_VALID) // if we don't have the data in cache, we bring it from main memory
             {
                 read_tocache(address/BLOCK_SIZE, way, set);
-                CACHE.MR++;
+                CACHE.misses++;
             }
 
             read_value = CACHE.cache_memory[way][set][offset];
@@ -233,6 +237,7 @@ unsigned char read_byte(unsigned int address)
 //If the block is not on the cache, it brings it back from memory and then, writes it
 void write_byte(unsigned int address, unsigned char value)
 {
+    CACHE.access++;
     //writing in main memory.
     write_in_main_memory(address, value);
 
@@ -248,7 +253,8 @@ void write_tomem(unsigned int blocknum, unsigned int set, unsigned int offset, u
 
 //Returns miss rate
 float get_miss_rate(void) {
-    return CACHE.MR;
+    float miss_rate = CACHE.misses/CACHE.access;
+    return miss_rate;
 }
 
 //Releases ADT cache
