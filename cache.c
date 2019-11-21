@@ -15,6 +15,8 @@
 #define SIZE_OFFSET_BITS 6
 #define SIZE_TAG_BITS 5
 
+#define MAX_ADDRESS 65535
+
 #define MASK_TAG 0x3E00
 #define MASK_VALID 0x8000
 #define MASK_OFFSET 0x003F
@@ -89,8 +91,10 @@ void _write_in_cache(unsigned int way, unsigned int set, unsigned int offset, un
     add_1_to_counter(set, way);
 }
 
+
+//Returns 1 if it's valid, 0 if it isn't
 int address_is_valid(unsigned int address) {
-    return (address <= (SIZE_SET_BITS + SIZE_TAG_BITS + SIZE_OFFSET_BITS)) ? 1 : 0;
+    return (address <= MAX_ADDRESS) ? 1 : 0;
 }
 
 /* ******************************************************************
@@ -204,7 +208,6 @@ void read_tocache(unsigned int blocknum, unsigned int way, unsigned int set)
     for (int offset = 0; offset < BLOCK_SIZE; offset++)
     {
         CACHE.cache_memory[way][set][offset] = MAIN_MEMORY[blocknum][offset];
-        printf("LLEGÓ ACÁ\n");
     }
     
     CACHE.cache_metadata[way][set] |= MASK_VALID; //if its load the block in cache, its need to refresh metadata
