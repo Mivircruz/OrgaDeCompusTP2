@@ -41,7 +41,7 @@ struct cache {
     //Second bit: Dirty
     //3,4,5,6,7 bits: Tag
     //Rest : counter
-    uint16_t cache_metadata[CACHE_SIZE / (BLOCK_SIZE * CACHE_WAYS)][CACHE_WAYS];
+    uint16_t cache_metadata[CACHE_WAYS][CACHE_SIZE / (BLOCK_SIZE * CACHE_WAYS)];
 
     //Miss rate
     float access;
@@ -72,15 +72,16 @@ void add_1_to_counter(unsigned int set, unsigned int new_way)
 
     for(size_t way = 0; way < CACHE_WAYS; way++) {
         if(way != new_way) {
-            metadata = CACHE.cache_metadata[set][way];
+            metadata = CACHE.cache_metadata[way][set];
             metadata++;
         }
     }
 }
 
-void _write_in_cache(unsigned int way, unsigned int set, unsigned int offset, unsigned char value) {
+void _write_in_cache(unsigned int way, unsigned int set, unsigned int offset, unsigned char value, unsigned int tag) {
     CACHE.cache_memory[way][set][offset] = value;
     CACHE.cache_metadata[way][set] |= MASK_VALID; // set byte valid with all ones
+    CACHE.cache_metadata[way][set] |= (tag << 9); // set tag in metadata
     add_1_to_counter(set, way);
 }
 
@@ -166,7 +167,7 @@ void write_in_cache(unsigned int address, unsigned char value)
                 write_tomem(CACHE.cache_memory[way][set][offset], address / BLOCK_SIZE, address % BLOCK_SIZE, value);
                 CACHE.cache_metadata[way][set] &= ~MASK_DIRTY; // we set the dirty byte in 0
             }
-            _write_in_cache(way, set, offset, value);
+            _write_in_cache(way, set, offset, value, tag);
             return;
         }
 
@@ -178,13 +179,13 @@ void write_in_cache(unsigned int address, unsigned char value)
     for (int way = 0; way < CACHE_WAYS; way++) {
          metadata = CACHE.cache_metadata[way][set];
         if (!(metadata & MASK_VALID)) {
-            _write_in_cache(way, set, offset, value);
+            _write_in_cache(way, set, offset, value, tag);
             return;
         }
     }
     //If there isn't an empty block, replaces an empty one
     unsigned int oldest_one = select_oldest(set);
-     _write_in_cache(oldest_one, set, offset, value);
+    _write_in_cache(oldest_one, set, offset, value, tag);
 }
 
 
@@ -218,19 +219,15 @@ unsigned char read_byte(unsigned int address)
         tag_in_cache = (metadata & MASK_TAG) >> 9; // //the 9 bits less significatives are droped (counter ones).
         
         if (tag_in_cache == tag) // the address match with the adress in cache metadata. The address i
-        {
-            if (metadata & MASK_VALID) // if we don't have the data in cache, we bring it from main memory
-            {
-                read_tocache(address/BLOCK_SIZE, way, set);
-                CACHE.misses++;
-            }
-
-            read_value = CACHE.cache_memory[way][set][offset];
-
-            return read_value;
-        }
+            return CACHE.cache_memory[way][set][offset];
     }
-    return read_value;
+    // If any of ways containts the tag then the adress is not in cache
+
+    unsigned int oldest_one = select_oldest(set);
+    read_tocache(address/BLOCK_SIZE, oldest_one, set);
+    CACHE.misses++;
+
+    return CACHE.cache_memory[oldest_one][set][offset];
 }
 
 //Writes the value on main memory on the address given 
