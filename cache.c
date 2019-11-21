@@ -69,11 +69,15 @@ void write_in_main_memory(unsigned int address, unsigned char value)
 void add_1_to_counter(unsigned int set, unsigned int new_way)
 {
     uint16_t metadata;
+    unsigned int valid;
 
     for(size_t way = 0; way < CACHE_WAYS; way++) {
         if(way != new_way) {
             metadata = CACHE.cache_metadata[way][set];
-            metadata++;
+            valid = metadata & MASK_VALID;
+            if(valid) {
+                metadata++; //Only adds 1 to those blocks containing something
+            }
         }
     }
 }
@@ -183,7 +187,7 @@ void write_in_cache(unsigned int address, unsigned char value)
             return;
         }
     }
-    //If there isn't an empty block, replaces an empty one
+    //If there isn't an empty block, replaces one
     unsigned int oldest_one = select_oldest(set);
     _write_in_cache(oldest_one, set, offset, value, tag);
 }
@@ -206,8 +210,7 @@ unsigned char read_byte(unsigned int address)
     unsigned int set = find_set(address);
     unsigned int offset = get_offset(address);
     unsigned int tag = get_tag(address);
-    unsigned char read_value = CACHE.cache_memory[tag][set][offset];
-
+    
     uint16_t metadata;
     unsigned int tag_in_cache;
 
@@ -218,15 +221,25 @@ unsigned char read_byte(unsigned int address)
         metadata = CACHE.cache_metadata[way][set];
         tag_in_cache = (metadata & MASK_TAG) >> 9; // //the 9 bits less significatives are droped (counter ones).
         
-        if (tag_in_cache == tag) // the address match with the adress in cache metadata. The address i
+        if (tag_in_cache == tag) // the address matches with the address in cache metadata. 
             return CACHE.cache_memory[way][set][offset];
     }
-    // If any of ways containts the tag then the adress is not in cache
 
+    // If none of the ways containts the tag then the address is not in cache
+    CACHE.misses++;
+    //Seeks for an empty block
+    for (int way = 0; way < CACHE_WAYS; way++) {
+         metadata = CACHE.cache_metadata[way][set];
+        if (!(metadata & MASK_VALID)) {
+            read_tocache(address/BLOCK_SIZE, way, set);
+            CACHE.cache_metadata[way][set] |= (tag >> 9);
+            return CACHE.cache_memory[way][set][offset];
+        }
+    }
+    //If there isn't an empty block, replaces one
     unsigned int oldest_one = select_oldest(set);
     read_tocache(address/BLOCK_SIZE, oldest_one, set);
-    CACHE.misses++;
-
+    CACHE.cache_metadata[oldest_one][set] |= (tag >> 9);
     return CACHE.cache_memory[oldest_one][set][offset];
 }
 
