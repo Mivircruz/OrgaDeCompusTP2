@@ -89,6 +89,10 @@ void _write_in_cache(unsigned int way, unsigned int set, unsigned int offset, un
     add_1_to_counter(set, way);
 }
 
+int address_is_valid(unsigned int address) {
+    return (address <= (SIZE_SET_BITS + SIZE_TAG_BITS + SIZE_OFFSET_BITS)) ? 1 : 0;
+}
+
 /* ******************************************************************
  *                      CACHE FUNCTIONS
  * *****************************************************************/
@@ -200,6 +204,7 @@ void read_tocache(unsigned int blocknum, unsigned int way, unsigned int set)
     for (int offset = 0; offset < BLOCK_SIZE; offset++)
     {
         CACHE.cache_memory[way][set][offset] = MAIN_MEMORY[blocknum][offset];
+        printf("LLEGÓ ACÁ\n");
     }
     
     CACHE.cache_metadata[way][set] |= MASK_VALID; //if its load the block in cache, its need to refresh metadata
@@ -207,6 +212,11 @@ void read_tocache(unsigned int blocknum, unsigned int way, unsigned int set)
 
 unsigned char read_byte(unsigned int address)
 {
+    if (!address_is_valid(address))
+    {
+        return 0;
+    }
+    
     unsigned int set = find_set(address);
     unsigned int offset = get_offset(address);
     unsigned int tag = get_tag(address);
@@ -221,15 +231,18 @@ unsigned char read_byte(unsigned int address)
         metadata = CACHE.cache_metadata[way][set];
         tag_in_cache = (metadata & MASK_TAG) >> 9; // //the 9 bits less significatives are droped (counter ones).
         
-        if (tag_in_cache == tag) // the address matches with the address in cache metadata. 
-            return CACHE.cache_memory[way][set][offset];
+        if (tag_in_cache == tag) { // the address matches with the address in cache metadata. 
+            if(!(metadata & MASK_VALID)) {
+                continue;
+            }
+             return CACHE.cache_memory[way][set][offset];
+        } 
     }
-
     // If none of the ways containts the tag then the address is not in cache
     CACHE.misses++;
     //Seeks for an empty block
     for (int way = 0; way < CACHE_WAYS; way++) {
-         metadata = CACHE.cache_metadata[way][set];
+        metadata = CACHE.cache_metadata[way][set];
         if (!(metadata & MASK_VALID)) {
             read_tocache(address/BLOCK_SIZE, way, set);
             CACHE.cache_metadata[way][set] |= (tag >> 9);
@@ -248,6 +261,11 @@ unsigned char read_byte(unsigned int address)
 //If the block is not on the cache, it brings it back from memory and then, writes it
 void write_byte(unsigned int address, unsigned char value)
 {
+    if (!address_is_valid(address))
+    {
+        return;
+    }
+
     CACHE.access++;
 
     //writing in main memory.
