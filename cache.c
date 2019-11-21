@@ -248,14 +248,14 @@ unsigned char read_byte(unsigned int address)
         metadata = CACHE.cache_metadata[way][set];
         if (!(metadata & MASK_VALID)) {
             read_tocache(address/BLOCK_SIZE, way, set);
-            CACHE.cache_metadata[way][set] |= (tag >> 9);
+            CACHE.cache_metadata[way][set] |= (tag << 9);
             return CACHE.cache_memory[way][set][offset];
         }
     }
     //If there isn't an empty block, replaces one
     unsigned int oldest_one = select_oldest(set);
     read_tocache(address/BLOCK_SIZE, oldest_one, set);
-    CACHE.cache_metadata[oldest_one][set] |= (tag >> 9);
+    CACHE.cache_metadata[oldest_one][set] |= (tag << 9);
     return CACHE.cache_memory[oldest_one][set][offset];
 }
 
